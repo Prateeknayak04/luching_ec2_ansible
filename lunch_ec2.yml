@@ -1,0 +1,44 @@
+---
+- name: Lunch a new EC2 instance 
+  hosts: localhost
+  gather_facts: no
+  connection: local
+
+
+  tasks:
+    - name: Configuring security group
+      amazon.aws.ec2_security_group:
+        name: default
+        description: Security Instance for EC2 instance
+        vpc_id: vpc-04550d2e519f89bca
+        region: ap-south-1
+        rules:
+          
+          - proto: tcp
+            from_port: 8080
+            to_port: 8080
+            cidr_ip: 0.0.0.0/0
+          - proto: tcp
+            from_port: 3000
+            to_port: 3000
+            cidr_ip: 0.0.0.0/0
+
+          - proto: tcp
+            from_port: 22
+            to_port: 22
+            cidr_ip: 0.0.0.0/0
+        rules_egress:
+          - proto: all
+            cidr_ip: 0.0.0.0/0
+      register: security_group
+    - name: Lunch EC2 Instance
+      amazon.aws.ec2_instance:
+        name: ansible-demo-2
+        key_name: ansible-key
+        region: ap-south-1
+        instance_type: t2.micro
+        image_id: ami-05c179eced2eb9b5b
+        count: 1
+        security_group: "{{ security_group.security_id }}"
+      register: ec2
+        
